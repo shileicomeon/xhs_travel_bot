@@ -43,13 +43,13 @@ def display_qrcode_in_terminal(image_path):
         img = img.resize((new_width, new_height))
         
         # 转换为ASCII
-        pixels = img.getdata()
+        pixels = list(img.getdata())
         ascii_chars = ['█', '▓', '▒', '░', ' ']
         
         ascii_art = []
         for i in range(0, len(pixels), new_width):
             row = pixels[i:i+new_width]
-            ascii_row = ''.join([ascii_chars[min(pixel // 51, 4)] for pixel in row])
+            ascii_row = ''.join([ascii_chars[min(int(pixel) // 51, 4)] for pixel in row])
             ascii_art.append(ascii_row)
         
         print("\n" + "\n".join(ascii_art) + "\n")
@@ -143,9 +143,18 @@ async def check_and_login():
                         img_base64 = base64.b64encode(f.read()).decode()
                     
                     # 发送简单的webhook消息附带提示
-                    webhook_msg = f"🔐 **小红书登录二维码**\n\n请查看服务器上的二维码图片：`{os.path.abspath(qr_path)}`\n\n或下载图片：\n```bash\nscp root@server:{os.path.abspath(qr_path)} .\n```\n\n⏰ 二维码有效期：4分钟"
+                    content_lines = [
+                        "🔐 **小红书登录二维码**",
+                        "",
+                        f"请查看服务器上的二维码图片：`{os.path.abspath(qr_path)}`",
+                        "",
+                        "或下载图片：",
+                        f"```bash\nscp root@server:{os.path.abspath(qr_path)} .\n```",
+                        "",
+                        "⏰ 二维码有效期：4分钟"
+                    ]
                     
-                    feishu.send_text_message("小红书登录二维码", webhook_msg)
+                    feishu.send_webhook_message("小红书登录二维码", content_lines)
                     logger.info("✅ 二维码信息已发送到飞书")
                     
                 except Exception as e:
