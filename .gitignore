@@ -45,6 +45,7 @@ logs/
 /tmp/
 *.tmp
 /temp/
+/temp_images/
 
 # OS
 .DS_Store

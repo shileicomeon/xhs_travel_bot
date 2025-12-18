@@ -13,7 +13,7 @@ from ..utils.logger import logger
 class TextCardGenerator:
     """文字卡片生成器"""
     
-    # 背景色方案（柔和、时尚的颜色）
+    # 背景色方案（更多彩的颜色）
     BACKGROUND_COLORS = [
         (255, 245, 240),  # 米白色
         (240, 248, 255),  # 浅蓝色
@@ -23,14 +23,52 @@ class TextCardGenerator:
         (240, 255, 240),  # 蜜瓜绿
         (255, 248, 220),  # 玉米丝色
         (230, 230, 250),  # 淡紫色
+        (255, 228, 225),  # 浅玫瑰色
+        (240, 255, 255),  # 天蓝色
+        (255, 250, 205),  # 柠檬绸色
+        (250, 240, 230),  # 亚麻色
+        (245, 245, 220),  # 米黄色
+        (255, 239, 213),  # 番木瓜色
+        (230, 255, 250),  # 薄荷奶油色
     ]
     
-    # 文字色（深色，与背景形成对比）
+    # 文字色方案（多种颜色，与背景形成对比）
     TEXT_COLORS = [
-        (60, 60, 60),    # 深灰色
-        (40, 40, 40),    # 炭灰色
-        (80, 80, 80),    # 中灰色
+        (60, 60, 60),      # 深灰色
+        (40, 40, 40),      # 炭灰色
+        (80, 80, 80),      # 中灰色
+        (70, 130, 180),    # 钢青色
+        (188, 143, 143),   # 玫瑰褐色
+        (139, 69, 19),     # 马鞍棕色
+        (85, 107, 47),     # 橄榄绿
+        (72, 61, 139),     # 深板岩蓝
+        (112, 128, 144),   # 板岩灰
+        (47, 79, 79),      # 深板岩灰
+        (105, 105, 105),   # 暗灰色
+        (128, 0, 0),       # 栗色
+        (0, 100, 0),       # 深绿色
+        (25, 25, 112),     # 午夜蓝
     ]
+    
+    # 根据关键词添加的装饰表情
+    KEYWORD_EMOJIS = {
+        '上班': ['💼', '👔', '⏰'],
+        '辞职': ['🎉', '🆓', '✨'],
+        '打工': ['💪', '🔥', '⚡'],
+        '周五': ['🎊', '🎈', '🌟'],
+        '周末': ['🎮', '🛋️', '☕'],
+        '逃离': ['🏃', '🚀', '🌈'],
+        '治愈': ['🌿', '🌸', '💚'],
+        '旅行': ['✈️', '🗺️', '🎒'],
+        '快乐': ['😊', '🌞', '💕'],
+        '值得': ['💖', '⭐', '🌺'],
+        '美好': ['🌸', '🌼', '🦋'],
+        '发呆': ['💭', '☁️', '🌙'],
+        '躺平': ['🛌', '😴', '💤'],
+        '咸鱼': ['🐟', '😌', '🌊'],
+        '梦想': ['💫', '🌠', '✨'],
+        '远方': ['🌄', '🏔️', '🌅'],
+    }
     
     def __init__(self, output_dir="temp_images"):
         """初始化"""
@@ -52,6 +90,9 @@ class TextCardGenerator:
         # 随机选择配色
         bg_color = random.choice(self.BACKGROUND_COLORS)
         text_color = random.choice(self.TEXT_COLORS)
+        
+        # 根据文字内容智能添加装饰表情
+        decoration_emoji = self._get_decoration_emoji(text)
         
         # 创建图片（小红书推荐尺寸：3:4，适当减小尺寸加快上传）
         width, height = 1080, 1350
@@ -94,24 +135,32 @@ class TextCardGenerator:
             font_size = 40
             font = ImageFont.load_default()
         
-        # 组合文字和表情（如果没有找到合适字体，去掉emoji避免显示问题）
-        if font and font != ImageFont.load_default():
-            full_text = f"{emoji} {text}" if emoji else text
-        else:
-            # 使用默认字体时去掉emoji，只保留文字
-            full_text = text
-            logger.warning(f"⚠️  使用默认字体，已移除emoji: {emoji}")
+        # 处理文字：支持自动换行（不添加emoji，避免显示为方框）
+        lines = self._wrap_text(text, font, draw, width - 200)  # 留100px边距
         
-        # 计算文字位置（居中）
-        bbox = draw.textbbox((0, 0), full_text, font=font)
-        text_width = bbox[2] - bbox[0]
-        text_height = bbox[3] - bbox[1]
+        # 记录装饰表情（但不添加到图片中，emoji在标题和正文中体现）
+        if decoration_emoji:
+            logger.info(f"✨ 装饰表情（标题用）: {decoration_emoji}")
         
-        x = (width - text_width) // 2
-        y = (height - text_height) // 2
+        if emoji:
+            logger.info(f"ℹ️  原始emoji将在标题中体现: {emoji}")
         
-        # 绘制文字
-        draw.text((x, y), full_text, fill=text_color, font=font)
+        # 计算总高度
+        line_height = font_size + 30  # 行间距
+        total_height = len(lines) * line_height
+        
+        # 绘制每一行（垂直居中）
+        start_y = (height - total_height) // 2
+        
+        for i, line in enumerate(lines):
+            # 计算每行的水平居中位置
+            bbox = draw.textbbox((0, 0), line, font=font)
+            text_width = bbox[2] - bbox[0]
+            x = (width - text_width) // 2
+            y = start_y + i * line_height
+            
+            # 绘制文字
+            draw.text((x, y), line, fill=text_color, font=font)
         
         # 保存图片（优化参数确保小红书能接受）
         output_path = os.path.join(self.output_dir, filename)
@@ -120,14 +169,77 @@ class TextCardGenerator:
         # optimize=True 可以减小文件大小
         image.save(output_path, 'JPEG', quality=85, optimize=True)
         
+        # 转换为绝对路径（确保MCP服务能找到文件）
+        abs_output_path = os.path.abspath(output_path)
+        
         # 验证图片文件
-        file_size = os.path.getsize(output_path)
-        logger.info(f"✅ 文字卡片已生成: {output_path}")
-        logger.info(f"   文字: {full_text}")
+        file_size = os.path.getsize(abs_output_path)
+        logger.info(f"✅ 文字卡片已生成: {abs_output_path}")
+        logger.info(f"   文字: {text}")
+        logger.info(f"   行数: {len(lines)}")
         logger.info(f"   背景色: RGB{bg_color}")
+        logger.info(f"   文字色: RGB{text_color}")
         logger.info(f"   文件大小: {file_size / 1024:.1f} KB")
         
-        return output_path
+        return abs_output_path
+    
+    def _get_decoration_emoji(self, text):
+        """
+        根据文字内容智能选择装饰表情
+        
+        Args:
+            text: 文字内容
+        
+        Returns:
+            表情符号或空字符串
+        """
+        for keyword, emojis in self.KEYWORD_EMOJIS.items():
+            if keyword in text:
+                return random.choice(emojis)
+        return ""
+    
+    def _wrap_text(self, text, font, draw, max_width):
+        """
+        自动换行
+        
+        Args:
+            text: 文字内容
+            font: 字体
+            draw: 绘图对象
+            max_width: 最大宽度
+        
+        Returns:
+            换行后的文字列表
+        """
+        # 如果文字不长，直接返回
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        
+        if text_width <= max_width:
+            return [text]
+        
+        # 需要换行：按字符逐个测试
+        lines = []
+        current_line = ""
+        
+        for char in text:
+            test_line = current_line + char
+            bbox = draw.textbbox((0, 0), test_line, font=font)
+            test_width = bbox[2] - bbox[0]
+            
+            if test_width <= max_width:
+                current_line = test_line
+            else:
+                # 当前行已满，开始新行
+                if current_line:
+                    lines.append(current_line)
+                current_line = char
+        
+        # 添加最后一行
+        if current_line:
+            lines.append(current_line)
+        
+        return lines if lines else [text]
     
     def cleanup(self):
         """清理临时文件"""

@@ -66,8 +66,7 @@ def run_normal_mode(city=None):
     import random
     
     # 随机决定使用哪种模式：80% 旅游攻略，20% 文字卡片
-    # 🧪 临时强制文字卡片模式测试（优化后）
-    mode = 'text_card'  # 测试用，正常应该是: 'travel' if random.random() < 0.8 else 'text_card'
+    mode = 'travel' if random.random() < 0.8 else 'text_card'
     
     logger.info("="*60)
     logger.info("🚀 小红书自动发布系统 V2（双模式）")
