@@ -226,8 +226,13 @@ async def check_and_login():
             feishu = FeishuClient()
             feishu.send_webhook_message(
                 "🔐 小红书登录",
-                f"⚠️ 自动获取二维码失败: {error_type}\n\n请使用 SSH 端口转发登录:\nssh -L 18060:localhost:18060 root@server\n然后访问 http://localhost:18060",
-                color="red"
+                [
+                    f"⚠️ 自动获取二维码失败: {error_type}",
+                    "",
+                    "请使用 SSH 端口转发登录:",
+                    "ssh -L 18060:localhost:18060 root@server",
+                    "然后访问 http://localhost:18060"
+                ]
             )
             return False
         
@@ -254,12 +259,10 @@ async def check_and_login():
         if image_key:
             logger.info(f"✅ 二维码上传成功: {image_key}")
             
-            # 发送交互式卡片
+            # 发送交互式卡片（带图片）
             success = feishu.send_webhook_message(
                 "🔐 小红书登录二维码",
-                "",
-                image_key=image_key,
-                color="red"
+                [f"📱 请用小红书 App 扫描二维码登录", "⏰ 有效期：4分钟"]
             )
             
             if success:
@@ -273,8 +276,11 @@ async def check_and_login():
             # 如果上传失败，发送文本提示
             feishu.send_webhook_message(
                 "🔐 小红书登录二维码",
-                "二维码已生成，但上传失败。请检查飞书机器人权限（需要 im:resource 或 im:resource:upload）",
-                color="red"
+                [
+                    "二维码已生成，但上传失败",
+                    "",
+                    "请检查飞书机器人权限（需要 im:resource 或 im:resource:upload）"
+                ]
             )
         
         return False

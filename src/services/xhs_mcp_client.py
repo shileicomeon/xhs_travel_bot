@@ -111,23 +111,23 @@ class XhsMcpClient:
             
             # 保存二维码图片
             if save_path and qr_base64:
-                import base64
-                import os
-                
-                # 确保目录存在
+                    import base64
+                    import os
+                    
+                    # 确保目录存在
                 save_dir = os.path.dirname(save_path)
                 if save_dir:
                     os.makedirs(save_dir, exist_ok=True)
-                
+                    
                 # 如果是data URL格式，移除前缀
                 if isinstance(qr_base64, str) and qr_base64.startswith('data:image'):
                     qr_base64 = qr_base64.split(',')[1] if ',' in qr_base64 else qr_base64
                 
                 # 保存图片
                 if isinstance(qr_base64, str):
-                    with open(save_path, 'wb') as f:
+                        with open(save_path, 'wb') as f:
                         f.write(base64.b64decode(qr_base64))
-                    logger.info(f"✅ 二维码已保存到: {save_path}")
+                        logger.info(f"✅ 二维码已保存到: {save_path}")
                     
                     # 将保存路径添加到结果中
                     if isinstance(result, dict):

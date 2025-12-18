@@ -164,16 +164,12 @@ async def _publish_via_mcp_async(post):
                 if not note_id or len(note_id) < 10:
                     if '发布成功' in text or 'success' in text.lower():
                         # MCP说发布成功但没有返回ID，可能是草稿箱
-                        logger.warning("⚠️  MCP返回'发布成功'但未找到PostID")
-                        logger.warning("   可能原因：内容进入草稿箱，或MCP返回格式变化")
-                        logger.warning(f"   完整响应: {text}")
+                        logger.error("❌ MCP返回'发布成功'但未找到PostID")
+                        logger.error("   可能原因：内容进入草稿箱，或MCP返回格式变化")
+                        logger.error(f"   完整响应: {text}")
                         
-                        # 尝试从浏览器或MCP界面获取最新发布的笔记ID
-                        logger.info("💡 建议：访问 http://localhost:18060 查看最新发布记录")
-                        
-                        # 暂时标记为成功，但note_id为特殊值
-                        note_id = "draft_or_pending"
-                        post_status = "success_no_id"
+                        # 抛出异常，不能标记为成功
+                        raise ValueError(f"发布失败：MCP未返回PostID，可能进入草稿箱。完整响应: {text}")
                 
                 # 提取Status
                 if 'Status:' in text:
