@@ -91,25 +91,39 @@ class XhsMcpClient:
             tool = self._get_tool("get_login_qrcode")
             result = await tool.ainvoke({})
             
-            # 如果指定了保存路径，保存二维码图片
-            if save_path and isinstance(result, dict):
-                qr_data = result.get('qrcode') or result.get('qr_code') or result.get('image')
-                if qr_data:
-                    import base64
-                    import os
+            # 处理返回结果，提取base64图片数据
+            qr_base64 = None
+            if isinstance(result, list):
+                # 遍历列表查找image类型的项
+                for item in result:
+                    if isinstance(item, dict) and item.get('type') == 'image':
+                        qr_base64 = item.get('base64')
+                        break
+            elif isinstance(result, dict):
+                qr_base64 = result.get('qrcode') or result.get('qr_code') or result.get('image') or result.get('base64')
+            
+            # 保存二维码图片
+            if save_path and qr_base64:
+                import base64
+                import os
+                
+                # 确保目录存在
+                save_dir = os.path.dirname(save_path)
+                if save_dir:
+                    os.makedirs(save_dir, exist_ok=True)
+                
+                # 如果是data URL格式，移除前缀
+                if isinstance(qr_base64, str) and qr_base64.startswith('data:image'):
+                    qr_base64 = qr_base64.split(',')[1] if ',' in qr_base64 else qr_base64
+                
+                # 保存图片
+                if isinstance(qr_base64, str):
+                    with open(save_path, 'wb') as f:
+                        f.write(base64.b64decode(qr_base64))
+                    logger.info(f"✅ 二维码已保存到: {save_path}")
                     
-                    # 确保目录存在
-                    os.makedirs(os.path.dirname(save_path) if os.path.dirname(save_path) else '.', exist_ok=True)
-                    
-                    # 如果是base64编码，解码并保存
-                    if isinstance(qr_data, str) and qr_data.startswith('data:image'):
-                        # 移除data:image/png;base64,前缀
-                        qr_data = qr_data.split(',')[1] if ',' in qr_data else qr_data
-                    
-                    if isinstance(qr_data, str):
-                        with open(save_path, 'wb') as f:
-                            f.write(base64.b64decode(qr_data))
-                        logger.info(f"✅ 二维码已保存到: {save_path}")
+                    # 将保存路径添加到结果中
+                    if isinstance(result, dict):
                         result['saved_path'] = save_path
             
             logger.info(f"✅ 获取登录二维码成功")

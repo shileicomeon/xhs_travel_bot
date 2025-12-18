@@ -96,6 +96,61 @@ async def check_and_login():
                 # 在终端显示二维码图片
                 display_qrcode_in_terminal(qr_path)
                 
+                # 通过飞书发送二维码
+                try:
+                    from src.services.feishu_client import FeishuClient
+                    feishu = FeishuClient()
+                    
+                    # 发送图片卡片
+                    message = {
+                        "msg_type": "interactive",
+                        "card": {
+                            "elements": [
+                                {
+                                    "tag": "markdown",
+                                    "content": "**小红书登录二维码**\n\n请使用小红书App扫描下方二维码登录"
+                                },
+                                {
+                                    "tag": "img",
+                                    "img_key": qr_path,
+                                    "alt": {
+                                        "tag": "plain_text",
+                                        "content": "登录二维码"
+                                    }
+                                },
+                                {
+                                    "tag": "note",
+                                    "elements": [
+                                        {
+                                            "tag": "plain_text",
+                                            "content": "⏰ 二维码有效期：4分钟"
+                                        }
+                                    ]
+                                }
+                            ],
+                            "header": {
+                                "title": {
+                                    "content": "🔐 小红书登录",
+                                    "tag": "plain_text"
+                                }
+                            }
+                        }
+                    }
+                    
+                    # 直接读取图片并上传
+                    with open(qr_path, 'rb') as f:
+                        import base64
+                        img_base64 = base64.b64encode(f.read()).decode()
+                    
+                    # 发送简单的webhook消息附带提示
+                    webhook_msg = f"🔐 **小红书登录二维码**\n\n请查看服务器上的二维码图片：`{os.path.abspath(qr_path)}`\n\n或下载图片：\n```bash\nscp root@server:{os.path.abspath(qr_path)} .\n```\n\n⏰ 二维码有效期：4分钟"
+                    
+                    feishu.send_text_message("小红书登录二维码", webhook_msg)
+                    logger.info("✅ 二维码信息已发送到飞书")
+                    
+                except Exception as e:
+                    logger.warning(f"⚠️  发送飞书通知失败: {e}")
+                
                 logger.info(f"\n二维码图片已保存到: {qr_path}")
                 logger.info("如果在远程服务器上，也可以下载图片:")
                 logger.info(f"  scp user@server:{os.path.abspath(qr_path)} .")
