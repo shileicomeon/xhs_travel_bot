@@ -37,3 +37,6 @@ langgraph>=0.1.0
 # 飞书SDK
 lark-oapi>=1.4.0
 
+# 二维码生成和显示
+qrcode>=7.4.2
+

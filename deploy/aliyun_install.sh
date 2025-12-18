@@ -19,7 +19,8 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # 配置变量
-INSTALL_DIR="/opt/xhs_travel_bot"
+# 如果环境变量中指定了INSTALL_DIR，则使用指定的目录，否则使用默认的/opt/xhs_travel_bot
+INSTALL_DIR="${INSTALL_DIR:-/opt/xhs_travel_bot}"
 CURRENT_USER=$(whoami)
 
 echo -e "${GREEN}📋 部署配置${NC}"
@@ -74,7 +75,10 @@ sudo apt install -y \
     git \
     curl \
     wget \
-    screen
+    screen \
+    xvfb \
+    libgbm1 \
+    libasound2
 
 echo "✅ 系统依赖安装完成"
 
@@ -103,31 +107,44 @@ echo "配置npm阿里云镜像..."
 npm config set registry https://registry.npmmirror.com
 echo "✅ Node.js安装完成"
 
-# 步骤5：创建安装目录
-echo -e "${GREEN}[5/10] 创建安装目录...${NC}"
-if [ ! -d "$INSTALL_DIR" ]; then
-    sudo mkdir -p "$INSTALL_DIR"
-    sudo chown $CURRENT_USER:$CURRENT_USER "$INSTALL_DIR"
-    echo "✅ 目录创建完成: $INSTALL_DIR"
+# 步骤5：准备安装目录
+echo -e "${GREEN}[5/10] 准备安装目录...${NC}"
+
+# 检查是否在项目目录中运行
+if [ -f "src/scheduler_v2.py" ] && [ -f "requirements.txt" ]; then
+    echo "✅ 检测到在项目目录中运行"
+    INSTALL_DIR=$(pwd)
+    echo "使用当前目录: $INSTALL_DIR"
 else
-    echo "⚠️  目录已存在，将使用现有目录"
+    # 不在项目目录中，使用指定的INSTALL_DIR
+    if [ ! -d "$INSTALL_DIR" ]; then
+        sudo mkdir -p "$INSTALL_DIR"
+        sudo chown $CURRENT_USER:$CURRENT_USER "$INSTALL_DIR"
+        echo "✅ 目录创建完成: $INSTALL_DIR"
+    else
+        echo "⚠️  目录已存在，将使用现有目录"
+    fi
+    cd "$INSTALL_DIR"
 fi
 
-cd "$INSTALL_DIR"
-
-# 步骤6：检查代码
+# 步骤6：检查项目代码
 echo -e "${GREEN}[6/10] 检查项目代码...${NC}"
-if [ ! -f "src/scheduler_v2.py" ]; then
-    echo -e "${RED}❌ 未找到项目代码！${NC}"
-    echo "请先将代码上传到 $INSTALL_DIR"
-    echo ""
-    echo "上传方式："
-    echo "1. 使用Git: git clone <your-repo> $INSTALL_DIR"
-    echo "2. 使用SCP: scp -r /local/path/* $CURRENT_USER@server:$INSTALL_DIR/"
-    echo "3. 使用SFTP或其他工具上传"
-    exit 1
+echo "当前工作目录: $(pwd)"
+echo "检查文件: src/scheduler_v2.py $([ -f "src/scheduler_v2.py" ] && echo "✅" || echo "❌")"
+echo "检查文件: requirements.txt $([ -f "requirements.txt" ] && echo "✅" || echo "❌")"
+
+if [ -f "src/scheduler_v2.py" ] && [ -f "requirements.txt" ]; then
+    echo "✅ 项目代码已就绪，跳过克隆步骤"
 else
-    echo "✅ 项目代码已就绪"
+    echo -e "${RED}❌ 未找到项目代码！${NC}"
+    echo ""
+    echo "目录内容："
+    ls -la
+    echo ""
+    echo "建议操作："
+    echo "1. 确保在项目根目录运行: cd ~/sal/xhs_travel_bot && bash deploy/aliyun_install.sh"
+    echo "2. 或先克隆代码: git clone https://github.com/shileicomeon/xhs_travel_bot.git"
+    exit 1
 fi
 
 # 步骤7：创建Python虚拟环境
@@ -154,14 +171,8 @@ pip install -r requirements.txt
 
 echo "✅ Python依赖安装完成"
 
-# 步骤9：安装小红书MCP工具
-echo -e "${GREEN}[9/10] 安装小红书MCP工具...${NC}"
-npm install -g @modelcontextprotocol/server-xiaohongshu
-
-echo "✅ MCP工具安装完成"
-
-# 步骤10：创建必要的目录
-echo -e "${GREEN}[10/10] 创建必要的目录...${NC}"
+# 步骤9：创建必要的目录
+echo -e "${GREEN}[9/10] 创建必要的目录...${NC}"
 mkdir -p logs
 mkdir -p temp_images
 mkdir -p data
@@ -205,51 +216,9 @@ fi
 chmod 600 config/.env 2>/dev/null || true
 chmod 700 logs 2>/dev/null || true
 
-# 创建systemd服务
-echo ""
-echo -e "${YELLOW}=========================================="
-echo "🔧 创建MCP服务"
-echo "==========================================${NC}"
-
-sudo tee /etc/systemd/system/xhs-mcp.service > /dev/null <<EOF
-[Unit]
-Description=Xiaohongshu MCP Service
-After=network.target
-
-[Service]
-Type=simple
-User=$CURRENT_USER
-WorkingDirectory=$INSTALL_DIR
-ExecStart=/usr/bin/npx @modelcontextprotocol/server-xiaohongshu
-Restart=always
-RestartSec=10
-Environment="NODE_ENV=production"
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-sudo systemctl daemon-reload
-sudo systemctl enable xhs-mcp
-
-echo "✅ MCP服务已创建"
-echo ""
-echo "启动MCP服务: sudo systemctl start xhs-mcp"
-echo "查看状态: sudo systemctl status xhs-mcp"
-echo "查看日志: sudo journalctl -u xhs-mcp -f"
-
 # 创建快捷脚本
 echo ""
 echo -e "${GREEN}创建快捷管理脚本...${NC}"
-
-# 启动脚本
-cat > "$INSTALL_DIR/start_mcp.sh" <<'EOF'
-#!/bin/bash
-sudo systemctl start xhs-mcp
-echo "✅ MCP服务已启动"
-sudo systemctl status xhs-mcp
-EOF
-chmod +x "$INSTALL_DIR/start_mcp.sh"
 
 # 测试脚本
 cat > "$INSTALL_DIR/test_publish.sh" <<'EOF'
@@ -259,15 +228,6 @@ source venv/bin/activate
 python3 src/scheduler_v2.py --force
 EOF
 chmod +x "$INSTALL_DIR/test_publish.sh"
-
-# 登录脚本
-cat > "$INSTALL_DIR/login_xhs.sh" <<'EOF'
-#!/bin/bash
-cd "$(dirname "$0")"
-source venv/bin/activate
-python3 tools/login_helper.py
-EOF
-chmod +x "$INSTALL_DIR/login_xhs.sh"
 
 echo "✅ 快捷脚本创建完成"
 
@@ -281,27 +241,23 @@ echo -e "${YELLOW}📋 后续步骤：${NC}"
 echo ""
 echo "1️⃣  配置环境变量："
 echo "   vim $INSTALL_DIR/config/.env"
+echo "   需要配置: AI API密钥、飞书配置等"
 echo ""
-echo "2️⃣  启动MCP服务："
-echo "   $INSTALL_DIR/start_mcp.sh"
-echo "   或: sudo systemctl start xhs-mcp"
-echo ""
-echo "3️⃣  登录小红书账号："
-echo "   $INSTALL_DIR/login_xhs.sh"
-echo "   然后下载二维码: scp $CURRENT_USER@server:$INSTALL_DIR/login_qrcode.png ."
-echo ""
-echo "4️⃣  测试发布："
+echo "2️⃣  测试发布（确保本地MCP服务已启动）："
 echo "   $INSTALL_DIR/test_publish.sh"
 echo ""
-echo "5️⃣  配置定时任务："
+echo "3️⃣  配置定时任务："
 echo "   crontab -e"
-echo "   添加: 0 9-11 * * * $INSTALL_DIR/venv/bin/python3 $INSTALL_DIR/src/scheduler_v2.py >> /var/log/xhs_bot.log 2>&1"
+echo "   添加: 0 9-11 * * * $INSTALL_DIR/venv/bin/python3 $INSTALL_DIR/src/scheduler_v2.py >> $INSTALL_DIR/logs/cron.log 2>&1"
+echo ""
+echo -e "${YELLOW}⚠️  重要提示：${NC}"
+echo "   MCP服务需要在本地（Mac）运行，不在服务器上"
+echo "   服务器只负责运行定时任务和发布逻辑"
 echo ""
 echo -e "${GREEN}=========================================="
 echo "📚 文档位置：${NC}"
-echo "   - Ubuntu部署: $INSTALL_DIR/deploy/UBUNTU_DEPLOY.md"
-echo "   - MCP配置: $INSTALL_DIR/MCP_SETUP.md"
 echo "   - 项目说明: $INSTALL_DIR/README.md"
+echo "   - 配置参考: $INSTALL_DIR/config/settings.yaml"
 echo ""
 echo -e "${GREEN}🔧 常用命令：${NC}"
 echo "   启动MCP: sudo systemctl start xhs-mcp"
