@@ -149,13 +149,10 @@ async def check_and_login():
                     import traceback
                     logger.debug(traceback.format_exc())
                 
-                logger.info(f"\n二维码图片已保存到: {qr_path}")
-                logger.info("如果在远程服务器上，也可以下载图片:")
-                logger.info(f"  scp user@server:{os.path.abspath(qr_path)} .")
                 logger.info("\n扫码登录后，请重新运行此脚本验证")
                 logger.info("="*60)
             else:
-                logger.error("❌ 二维码图片未生成")
+                logger.error("❌ 未获取到二维码数据")
                 logger.info("请检查MCP服务是否正常运行")
             
             return False
