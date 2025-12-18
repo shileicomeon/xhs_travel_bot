@@ -84,6 +84,71 @@ class FeishuClient:
         sign = base64.b64encode(hmac_code).decode('utf-8')
         return sign
     
+    def upload_image(self, image_path=None, image_data=None):
+        """
+        上传图片到飞书获取image_key
+        
+        Args:
+            image_path: 本地图片路径（可选）
+            image_data: 图片二进制数据（可选）
+        
+        Returns:
+            image_key: 飞书图片key，失败返回None
+        """
+        access_token = self.get_access_token()
+        if not access_token:
+            logger.warning("无法获取access_token，跳过图片上传")
+            return None
+        
+        url = "https://open.feishu.cn/open-apis/im/v1/images"
+        
+        try:
+            # 准备图片数据
+            if image_data:
+                # 直接使用提供的二进制数据
+                import io
+                files = {
+                    'image': ('qrcode.png', io.BytesIO(image_data), 'image/png')
+                }
+            elif image_path:
+                # 从文件读取
+                with open(image_path, 'rb') as f:
+                    files = {
+                        'image': f
+                    }
+            else:
+                logger.error("必须提供 image_path 或 image_data")
+                return None
+            
+            data = {
+                'image_type': 'message'
+            }
+            headers = {
+                'Authorization': f'Bearer {access_token}'
+            }
+            
+            response = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                files=files if not image_data else files,
+                timeout=30
+            )
+            
+            result = response.json()
+            
+            if result.get("code") == 0:
+                image_key = result.get("data", {}).get("image_key")
+                logger.info(f"✅ 图片上传成功: {image_key}")
+                return image_key
+            else:
+                logger.error(f"图片上传失败: {result}")
+                return None
+        
+        except Exception as e:
+            logger.error(f"图片上传异常: {e}")
+            return None
+    
     @retry_on_failure(max_attempts=2)
     def send_webhook_message(self, title, content_lines):
         """

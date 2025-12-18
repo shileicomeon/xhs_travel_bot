@@ -88,8 +88,14 @@ class XhsMcpClient:
         
         logger.info("获取小红书登录二维码...")
         try:
+            import asyncio
             tool = self._get_tool("get_login_qrcode")
-            result = await tool.ainvoke({})
+            
+            # 添加超时控制（30秒）
+            result = await asyncio.wait_for(
+                tool.ainvoke({}),
+                timeout=30.0
+            )
             
             # 处理返回结果，提取base64图片数据
             qr_base64 = None
@@ -129,6 +135,11 @@ class XhsMcpClient:
             logger.info(f"✅ 获取登录二维码成功")
             return result
             
+        except asyncio.TimeoutError:
+            logger.error("❌ 获取登录二维码超时（30秒）")
+            logger.warning("⚠️  MCP服务可能卡住了，建议重启MCP服务")
+            logger.info("重启命令: pkill -f xiaohongshu-mcp && cd ~/xiaohongshu-mcp && xvfb-run -a go run . -headless=true &")
+            return {"error": "timeout"}
         except ValueError:
             logger.warning("⚠️  MCP服务不支持 get_login_qrcode 工具")
             logger.info("请使用浏览器访问 http://localhost:18060 进行登录")

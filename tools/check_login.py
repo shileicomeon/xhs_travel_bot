@@ -20,46 +20,6 @@ from src.utils.logger import logger
 from src.services.xhs_mcp_client import XhsMcpClient
 
 
-def display_qrcode_in_terminal(image_path):
-    """在终端显示二维码图片"""
-    try:
-        from PIL import Image
-        
-        logger.info("\n" + "="*60)
-        logger.info("📱 请使用小红书App扫描下方二维码登录")
-        logger.info("="*60)
-        
-        # 读取图片
-        img = Image.open(image_path)
-        
-        # 转换为黑白
-        img = img.convert('L')
-        
-        # 缩放到合适的终端显示大小
-        width, height = img.size
-        aspect_ratio = height / width
-        new_width = 60
-        new_height = int(aspect_ratio * new_width * 0.5)  # 0.5是因为字符高度约为宽度的2倍
-        img = img.resize((new_width, new_height))
-        
-        # 转换为ASCII
-        pixels = list(img.getdata())
-        ascii_chars = ['█', '▓', '▒', '░', ' ']
-        
-        ascii_art = []
-        for i in range(0, len(pixels), new_width):
-            row = pixels[i:i+new_width]
-            ascii_row = ''.join([ascii_chars[min(int(pixel) // 51, 4)] for pixel in row])
-            ascii_art.append(ascii_row)
-        
-        print("\n" + "\n".join(ascii_art) + "\n")
-        logger.info("="*60)
-        
-    except Exception as e:
-        logger.warning(f"无法在终端显示二维码: {e}")
-        logger.info(f"请查看保存的图片文件: {image_path}")
-
-
 async def check_and_login():
     """检查登录状态并生成二维码"""
     client = XhsMcpClient()
@@ -80,85 +40,114 @@ async def check_and_login():
             logger.warning("❌ 未登录小红书")
             logger.info("正在生成登录二维码...")
             
-            # 生成二维码
-            qr_path = "login_qrcode.png"
-            qr_result = await client.get_login_qrcode(save_path=qr_path)
+            # 生成二维码（不保存本地文件）
+            qr_result = await client.get_login_qrcode()
             
             logger.info(f"二维码结果类型: {type(qr_result)}")
-            logger.info(f"二维码结果: {qr_result}")
             
-            # 检查图片是否保存成功
-            import os
-            if os.path.exists(qr_path):
-                logger.info(f"✅ 二维码图片已保存: {qr_path}")
-                logger.info(f"图片大小: {os.path.getsize(qr_path)} bytes")
+            # 提取base64图片数据
+            import base64
+            qr_base64 = None
+            if isinstance(qr_result, list):
+                for item in qr_result:
+                    if isinstance(item, dict) and item.get('type') == 'image':
+                        qr_base64 = item.get('base64')
+                        break
+            
+            if qr_base64:
+                logger.info("✅ 获取到二维码数据")
                 
-                # 在终端显示二维码图片
-                display_qrcode_in_terminal(qr_path)
+                # 解码base64为二进制数据
+                qr_image_data = base64.b64decode(qr_base64)
+                logger.info(f"图片大小: {len(qr_image_data)} bytes")
                 
-                # 通过飞书发送二维码
+                # 通过飞书发送二维码图片
                 try:
                     from src.services.feishu_client import FeishuClient
+                    import requests
+                    import time
+                    
                     feishu = FeishuClient()
                     
-                    # 发送图片卡片
-                    message = {
-                        "msg_type": "interactive",
-                        "card": {
-                            "elements": [
-                                {
-                                    "tag": "markdown",
-                                    "content": "**小红书登录二维码**\n\n请使用小红书App扫描下方二维码登录"
-                                },
-                                {
-                                    "tag": "img",
-                                    "img_key": qr_path,
-                                    "alt": {
+                    # 直接上传图片数据到飞书（不保存本地）
+                    logger.info("正在上传二维码图片到飞书...")
+                    image_key = feishu.upload_image(image_data=qr_image_data)
+                    
+                    if image_key and feishu.webhook_url:
+                        # 发送带图片的消息卡片
+                        card = {
+                            "msg_type": "interactive",
+                            "card": {
+                                "header": {
+                                    "title": {
                                         "tag": "plain_text",
-                                        "content": "登录二维码"
-                                    }
+                                        "content": "🔐 小红书登录二维码"
+                                    },
+                                    "template": "blue"
                                 },
-                                {
-                                    "tag": "note",
-                                    "elements": [
-                                        {
+                                "elements": [
+                                    {
+                                        "tag": "div",
+                                        "text": {
                                             "tag": "plain_text",
-                                            "content": "⏰ 二维码有效期：4分钟"
+                                            "content": "📱 请使用小红书App扫描下方二维码登录"
                                         }
-                                    ]
-                                }
-                            ],
-                            "header": {
-                                "title": {
-                                    "content": "🔐 小红书登录",
-                                    "tag": "plain_text"
-                                }
+                                    },
+                                    {
+                                        "tag": "img",
+                                        "img_key": image_key,
+                                        "alt": {
+                                            "tag": "plain_text",
+                                            "content": "登录二维码"
+                                        }
+                                    },
+                                    {
+                                        "tag": "note",
+                                        "elements": [
+                                            {
+                                                "tag": "plain_text",
+                                                "content": f"⏰ 二维码有效期：4分钟\n📂 图片路径: {os.path.abspath(qr_path)}"
+                                            }
+                                        ]
+                                    }
+                                ]
                             }
                         }
-                    }
-                    
-                    # 直接读取图片并上传
-                    with open(qr_path, 'rb') as f:
-                        import base64
-                        img_base64 = base64.b64encode(f.read()).decode()
-                    
-                    # 发送简单的webhook消息附带提示
-                    content_lines = [
-                        "🔐 **小红书登录二维码**",
-                        "",
-                        f"请查看服务器上的二维码图片：`{os.path.abspath(qr_path)}`",
-                        "",
-                        "或下载图片：",
-                        f"```bash\nscp root@server:{os.path.abspath(qr_path)} .\n```",
-                        "",
-                        "⏰ 二维码有效期：4分钟"
-                    ]
-                    
-                    feishu.send_webhook_message("小红书登录二维码", content_lines)
-                    logger.info("✅ 二维码信息已发送到飞书")
+                        
+                        # 添加签名（如果有）
+                        webhook_secret = os.getenv("FEISHU_WEBHOOK_SECRET")
+                        if webhook_secret:
+                            timestamp = str(int(time.time()))
+                            sign = feishu._generate_sign(timestamp, webhook_secret)
+                            card["timestamp"] = timestamp
+                            card["sign"] = sign
+                        
+                        response = requests.post(feishu.webhook_url, json=card, timeout=10)
+                        result = response.json()
+                        
+                        if result.get("code") == 0 or result.get("StatusCode") == 0:
+                            logger.info("✅ 二维码图片已发送到飞书")
+                        else:
+                            logger.warning(f"⚠️  发送飞书消息失败: {result}")
+                    else:
+                        # 如果图片上传失败，发送文本提示
+                        content_lines = [
+                            "🔐 小红书登录二维码",
+                            "",
+                            f"📂 图片路径: {os.path.abspath(qr_path)}",
+                            "",
+                            "下载命令:",
+                            f"scp root@server:{os.path.abspath(qr_path)} .",
+                            "",
+                            "⏰ 二维码有效期：4分钟"
+                        ]
+                        feishu.send_webhook_message("🔐 小红书登录二维码", content_lines)
+                        logger.info("✅ 二维码路径已发送到飞书")
                     
                 except Exception as e:
                     logger.warning(f"⚠️  发送飞书通知失败: {e}")
+                    import traceback
+                    logger.debug(traceback.format_exc())
                 
                 logger.info(f"\n二维码图片已保存到: {qr_path}")
                 logger.info("如果在远程服务器上，也可以下载图片:")
