@@ -117,9 +117,9 @@ class TextCardGenerator:
             for font_path in font_paths:
                 if os.path.exists(font_path):
                     try:
-                    font = ImageFont.truetype(font_path, font_size)
+                        font = ImageFont.truetype(font_path, font_size)
                         logger.info(f"✅ 使用字体: {font_path}")
-                    break
+                        break
                     except Exception as e:
                         logger.debug(f"加载字体 {font_path} 失败: {e}")
                         continue
@@ -155,8 +155,8 @@ class TextCardGenerator:
         for i, line in enumerate(lines):
             # 计算每行的水平居中位置
             bbox = draw.textbbox((0, 0), line, font=font)
-        text_width = bbox[2] - bbox[0]
-        x = (width - text_width) // 2
+            text_width = bbox[2] - bbox[0]
+            x = (width - text_width) // 2
             y = start_y + i * line_height
         
         # 绘制文字
