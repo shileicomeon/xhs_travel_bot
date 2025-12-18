@@ -253,8 +253,14 @@ async def check_and_login():
         logger.info("正在发送二维码到飞书...")
         feishu = FeishuClient()
         
-        # 直接上传 base64 数据到飞书（不保存本地文件）
-        image_key = feishu.upload_image(qr_base64)
+        # 将 base64 转换为二进制数据并上传到飞书
+        import base64
+        try:
+            image_data = base64.b64decode(qr_base64)
+            image_key = feishu.upload_image(image_data=image_data)
+        except Exception as decode_error:
+            logger.error(f"❌ base64解码失败: {decode_error}")
+            image_key = None
         
         if image_key:
             logger.info(f"✅ 二维码上传成功: {image_key}")
