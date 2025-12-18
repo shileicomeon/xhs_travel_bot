@@ -91,10 +91,10 @@ class XhsMcpClient:
             import asyncio
             tool = self._get_tool("get_login_qrcode")
             
-            # 添加超时控制（30秒）
+            # 添加超时控制（15秒，避免长时间卡住）
             result = await asyncio.wait_for(
                 tool.ainvoke({}),
-                timeout=30.0
+                timeout=15.0
             )
             
             # 处理返回结果，提取base64图片数据
@@ -136,9 +136,11 @@ class XhsMcpClient:
             return result
             
         except asyncio.TimeoutError:
-            logger.error("❌ 获取登录二维码超时（30秒）")
-            logger.warning("⚠️  MCP服务可能卡住了，建议重启MCP服务")
-            logger.info("重启命令: pkill -f xiaohongshu-mcp && cd ~/xiaohongshu-mcp && xvfb-run -a go run . -headless=true &")
+            logger.error("❌ 获取登录二维码超时（15秒）")
+            logger.warning("⚠️  MCP服务的 get_login_qrcode 工具在 headless 环境下卡住了")
+            logger.info("💡 建议：使用 SSH 端口转发登录")
+            logger.info("   ssh -L 18060:localhost:18060 root@your-server")
+            logger.info("   然后浏览器访问 http://localhost:18060")
             return {"error": "timeout"}
         except ValueError:
             logger.warning("⚠️  MCP服务不支持 get_login_qrcode 工具")
