@@ -18,13 +18,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# 检查是否为root用户
-if [ "$EUID" -eq 0 ]; then 
-   echo -e "${RED}❌ 请不要使用root用户运行此脚本${NC}"
-   echo "建议使用普通用户，脚本会在需要时提示输入sudo密码"
-   exit 1
-fi
-
 # 配置变量
 INSTALL_DIR="/opt/xhs_travel_bot"
 CURRENT_USER=$(whoami)
