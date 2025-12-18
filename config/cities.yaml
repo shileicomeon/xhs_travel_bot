@@ -1,0 +1,335 @@
+# 城市配置文件
+# 每个城市包含：地标、美食、饮品、氛围关键词
+# V2: 新增 topics 字段，支持具体主题（景点、美食、探店等）
+
+cities:
+  - name: 成都
+    # 具体主题列表（随机选择一个）
+    topics:
+      # 景点类
+      - type: landmark
+        name: 宽窄巷子
+      - type: landmark
+        name: 锦里
+      - type: landmark
+        name: 春熙路
+      - type: landmark
+        name: 太古里
+      # 美食类
+      - type: food
+        name: 火锅
+      - type: food
+        name: 串串
+      - type: food
+        name: 钵钵鸡
+      - type: food
+        name: 冒菜
+      # 饮品类
+      - type: drink
+        name: 茶馆
+      - type: drink
+        name: 盖碗茶
+      # 通用类（保底）
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [宽窄巷子, 锦里, 春熙路, 太古里, 人民公园, 武侯祠]
+      food: [火锅, 串串, 钵钵鸡, 冒菜, 夫妻肺片, 龙抄手]
+      drinks: [茶馆, 盖碗茶, 咖啡, 奶茶]
+      atmosphere: [慢生活, 悠闲, 烟火气, 巴适]
+    cooldown_days: 14
+    priority: high
+
+  - name: 重庆
+    topics:
+      # 景点类
+      - type: landmark
+        name: 洪崖洞
+      - type: landmark
+        name: 解放碑
+      - type: landmark
+        name: 磁器口
+      - type: landmark
+        name: 长江索道
+      - type: landmark
+        name: 李子坝轻轨
+      # 美食类
+      - type: food
+        name: 火锅
+      - type: food
+        name: 小面
+      - type: food
+        name: 酸辣粉
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [洪崖洞, 解放碑, 磁器口, 长江索道, 李子坝轻轨]
+      food: [火锅, 小面, 酸辣粉, 抄手, 毛血旺]
+      drinks: [江景咖啡, 茶馆, 奶茶]
+      atmosphere: [山城, 8D魔幻, 夜景, 爬坡上坎]
+    cooldown_days: 14
+    priority: high
+
+  - name: 杭州
+    topics:
+      # 景点类
+      - type: landmark
+        name: 西湖
+      - type: landmark
+        name: 灵隐寺
+      - type: landmark
+        name: 河坊街
+      - type: landmark
+        name: 西溪湿地
+      # 美食类
+      - type: food
+        name: 西湖醋鱼
+      - type: food
+        name: 东坡肉
+      - type: food
+        name: 片儿川
+      # 饮品类
+      - type: drink
+        name: 龙井茶
+      - type: drink
+        name: 咖啡馆
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [西湖, 灵隐寺, 河坊街, 西溪湿地, 雷峰塔]
+      food: [西湖醋鱼, 东坡肉, 龙井虾仁, 片儿川, 定胜糕]
+      drinks: [龙井茶, 江南茶馆, 西湖边咖啡]
+      atmosphere: [江南, 诗意, 温婉, 小桥流水]
+    cooldown_days: 21
+    priority: medium
+
+  - name: 西安
+    topics:
+      # 景点类
+      - type: landmark
+        name: 兵马俑
+      - type: landmark
+        name: 大雁塔
+      - type: landmark
+        name: 回民街
+      - type: landmark
+        name: 古城墙
+      # 美食类
+      - type: food
+        name: 肉夹馍
+      - type: food
+        name: 羊肉泡馍
+      - type: food
+        name: 凉皮
+      - type: food
+        name: biangbiang面
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [兵马俑, 大雁塔, 回民街, 古城墙, 钟楼鼓楼]
+      food: [肉夹馍, 羊肉泡馍, 凉皮, 胡辣汤, biangbiang面]
+      drinks: [冰峰, 茶馆, 咖啡]
+      atmosphere: [古都, 历史, 厚重, 十三朝古都]
+    cooldown_days: 21
+    priority: medium
+
+  - name: 厦门
+    topics:
+      # 景点类
+      - type: landmark
+        name: 鼓浪屿
+      - type: landmark
+        name: 曾厝垵
+      - type: landmark
+        name: 环岛路
+      # 美食类
+      - type: food
+        name: 沙茶面
+      - type: food
+        name: 海蛎煎
+      - type: food
+        name: 海鲜
+      # 饮品类
+      - type: drink
+        name: 海边咖啡
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [鼓浪屿, 曾厝垵, 环岛路, 南普陀寺, 中山路]
+      food: [沙茶面, 海蛎煎, 土笋冻, 姜母鸭, 海鲜]
+      drinks: [海边咖啡, 奶茶, 椰子水]
+      atmosphere: [海边, 文艺, 小清新, 慢节奏]
+    cooldown_days: 21
+    priority: medium
+
+  - name: 上海
+    topics:
+      # 景点类
+      - type: landmark
+        name: 外滩
+      - type: landmark
+        name: 南京路
+      - type: landmark
+        name: 田子坊
+      - type: landmark
+        name: 豫园
+      # 美食类
+      - type: food
+        name: 生煎
+      - type: food
+        name: 小笼包
+      - type: food
+        name: 本帮菜
+      # 饮品类
+      - type: drink
+        name: 咖啡馆
+      - type: drink
+        name: 下午茶
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [外滩, 南京路, 田子坊, 豫园, 陆家嘴]
+      food: [生煎, 小笼包, 本帮菜, 糖醋小排, 红烧肉]
+      drinks: [咖啡, 下午茶, 奶茶]
+      atmosphere: [摩登, 时尚, 国际化, 魔都]
+    cooldown_days: 14
+    priority: high
+
+  - name: 北京
+    topics:
+      # 景点类
+      - type: landmark
+        name: 故宫
+      - type: landmark
+        name: 长城
+      - type: landmark
+        name: 颐和园
+      - type: landmark
+        name: 南锣鼓巷
+      # 美食类
+      - type: food
+        name: 烤鸭
+      - type: food
+        name: 炸酱面
+      - type: food
+        name: 卤煮
+      - type: food
+        name: 豆汁
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [故宫, 天安门, 长城, 颐和园, 南锣鼓巷]
+      food: [烤鸭, 炸酱面, 卤煮, 豆汁, 驴打滚]
+      drinks: [茶馆, 咖啡, 豆汁]
+      atmosphere: [古都, 大气, 皇城根, 京味儿]
+    cooldown_days: 21
+    priority: medium
+
+  - name: 苏州
+    topics:
+      # 景点类
+      - type: landmark
+        name: 拙政园
+      - type: landmark
+        name: 虎丘
+      - type: landmark
+        name: 平江路
+      - type: landmark
+        name: 山塘街
+      # 美食类
+      - type: food
+        name: 松鼠桂鱼
+      - type: food
+        name: 苏式面
+      - type: food
+        name: 蟹粉小笼
+      # 饮品类
+      - type: drink
+        name: 碧螺春
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [拙政园, 虎丘, 平江路, 山塘街, 金鸡湖]
+      food: [松鼠桂鱼, 苏式面, 蟹粉小笼, 糖粥]
+      drinks: [碧螺春, 茶馆, 咖啡]
+      atmosphere: [园林, 精致, 江南, 小桥流水]
+    cooldown_days: 30
+    priority: low
+
+  - name: 南京
+    topics:
+      # 景点类
+      - type: landmark
+        name: 夫子庙
+      - type: landmark
+        name: 中山陵
+      - type: landmark
+        name: 玄武湖
+      - type: landmark
+        name: 秦淮河
+      # 美食类
+      - type: food
+        name: 鸭血粉丝汤
+      - type: food
+        name: 盐水鸭
+      - type: food
+        name: 小笼包
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [夫子庙, 中山陵, 玄武湖, 总统府, 秦淮河]
+      food: [鸭血粉丝汤, 盐水鸭, 小笼包, 鸭油烧饼]
+      drinks: [咖啡, 奶茶, 茶馆]
+      atmosphere: [六朝古都, 民国风, 梧桐树]
+    cooldown_days: 30
+    priority: low
+
+  - name: 长沙
+    topics:
+      # 景点类
+      - type: landmark
+        name: 橘子洲
+      - type: landmark
+        name: 岳麓山
+      - type: landmark
+        name: 太平街
+      - type: landmark
+        name: 坡子街
+      # 美食类
+      - type: food
+        name: 臭豆腐
+      - type: food
+        name: 口味虾
+      - type: food
+        name: 糖油粑粑
+      # 饮品类
+      - type: drink
+        name: 茶颜悦色
+      # 通用类
+      - type: general
+        name: 旅游攻略
+
+    keywords:
+      landmarks: [橘子洲, 岳麓山, 太平街, 坡子街, 五一广场]
+      food: [臭豆腐, 口味虾, 糖油粑粑, 剁椒鱼头]
+      drinks: [茶颜悦色, 咖啡, 奶茶]
+      atmosphere: [娱乐之都, 夜生活, 热辣, 烟火气]
+    cooldown_days: 21
+    priority: medium

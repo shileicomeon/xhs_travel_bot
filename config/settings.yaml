@@ -1,0 +1,154 @@
+# 系统配置文件
+
+# 调度器配置
+scheduler:
+  publish_window_start: "09:00"
+  publish_window_end: "11:00"
+  timezone: "Asia/Shanghai"
+
+# 图片配置
+images:
+  count_min: 4
+  count_max: 8
+  types: [city_view, play, eat, drink, life, extra]
+
+  # 图片源配置
+  sources:
+    # 启用的源（按优先级）
+    tier1_albums:
+      - mafengwo # 马蜂窝
+      - xiaohongshu_web # 小红书网页版
+      - ctrip # 携程
+
+    tier2_stock:
+      - bieyang # 别样网
+      - unsplash # Unsplash
+
+    tier3_search:
+      - baidu # 百度图片
+      - bing # 必应图片
+      - sogou # 搜狗图片
+
+    tier4_design:
+      - huaban # 花瓣网
+      - tuchong # 图虫
+
+    tier5_social:
+      - weibo # 微博
+
+  # 获取策略
+  strategy: "layered" # layered(分层) / parallel(并行) / smart(智能路由)
+  timeout: 30
+  max_retries: 3
+
+# 图片处理配置
+image_processing:
+  enabled: true
+  temp_dir: "/tmp/xhs_images"
+
+  # 处理选项
+  auto_crop: true
+  auto_resize: true
+  max_size_mb: 5
+  target_quality: 90
+
+  # 清理策略
+  cleanup_after_publish: true
+  cleanup_old_files: true
+  max_age_hours: 24
+
+# AI配置
+ai:
+  provider: "deepseek" # deepseek / baidu
+
+  # DeepSeek配置
+  deepseek:
+    model_chat: "deepseek-chat"
+    model_vision: "deepseek-chat" # DeepSeek支持视觉
+    temperature: 0.7
+    max_tokens: 1000
+
+  # 百度AI配置（备用）
+  baidu:
+    model_chat: "ernie-bot-turbo"
+    model_vision: "fuyu-8b"
+    temperature: 0.7
+
+# 内容配置
+content:
+  title_length_min: 10
+  title_length_max: 20
+  content_length_min: 100
+  content_length_max: 800
+  tags_count_min: 3
+  tags_count_max: 8
+
+  # 风格
+  style: "xiaohongshu" # 小红书风格
+  tone: "casual" # 口语化
+  use_emoji: true # 使用emoji
+
+# 去重配置
+deduplication:
+  enabled: true
+  check_recent_days: 30 # 检查最近30天
+
+  # 城市权重
+  city_weights:
+    never_published: 10 # 从未发布
+    published_once: 5 # 发布过1次
+    published_twice: 2 # 发布过2次
+    published_more: 1 # 发布过3次以上
+
+# 重试配置
+retry:
+  max_attempts: 3
+  backoff_factor: 2
+  backoff_max: 10
+
+# 日志配置
+logging:
+  level: "INFO" # DEBUG / INFO / WARNING / ERROR
+  format: "json" # json / text
+  rotation: "daily" # daily / size
+  retention_days: 30
+  log_dir: "/var/log/xhs_bot"
+
+# 飞书配置
+feishu:
+  enabled: true
+  use_webhook: true
+  use_table: true
+
+  # 通知配置
+  notify_on_success: true
+  notify_on_failure: true
+
+  # 表格字段
+  table_fields:
+    - 日期
+    - 城市
+    - 主题
+    - 状态
+    - 发布时间
+    - 笔记ID
+    - 图片来源
+    - AI调用次数
+    - 总耗时
+    - 失败原因
+
+# 监控配置
+monitoring:
+  enabled: true
+  collect_metrics: true
+
+  # 告警阈值
+  alert_thresholds:
+    consecutive_failures: 3
+    success_rate_7days: 0.8
+    api_quota_remaining: 100
+
+# 安全配置
+security:
+  mask_sensitive_in_logs: true
+  validate_env_on_startup: true

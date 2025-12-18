@@ -1,0 +1,39 @@
+# HTTP客户端
+requests>=2.31.0
+
+# HTML解析
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# 图片处理
+pillow>=10.0.0
+imagehash>=4.3.0
+
+# 配置文件
+pyyaml>=6.0
+python-dotenv>=1.0.0
+
+# 重试机制
+tenacity>=8.2.0
+
+# 日志
+loguru>=0.7.0
+
+# 时区处理
+pytz>=2023.3
+
+# 异步HTTP（可选）
+aiohttp>=3.9.0
+
+# OpenAI兼容客户端（用于DeepSeek/Qwen）
+openai>=1.0.0
+
+# LangChain相关（用于MCP集成）
+langchain-openai>=0.1.0
+langchain-mcp-adapters>=0.1.0
+langchain-core>=0.1.0
+langgraph>=0.1.0
+
+# 飞书SDK
+lark-oapi>=1.4.0
+

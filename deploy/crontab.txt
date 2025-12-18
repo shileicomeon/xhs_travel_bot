@@ -1,0 +1,35 @@
+# Cron配置示例（V2版本）
+# 每天在9-11点之间执行
+
+# 格式说明：
+# 分 时 日 月 周 命令
+# * * * * * command
+
+# 小红书旅游博主自动发布（V2）
+0 9-11 * * * cd /opt/xhs_travel_bot && /usr/bin/python3 src/scheduler_v2.py >> /var/log/xhs_bot_cron.log 2>&1
+
+# 说明：
+# - 每天9点、10点、11点各执行一次
+# - scheduler_v2.py 会在9:00-11:00窗口内随机选择发布时间
+# - 系统会自动随机选择城市
+# - 日志输出到 /var/log/xhs_bot_cron.log
+# - 需要确保小红书MCP服务已启动
+
+# 可选：指定城市发布
+# 0 9-11 * * * cd /opt/xhs_travel_bot && /usr/bin/python3 src/scheduler_v2.py --city 杭州 >> /var/log/xhs_bot_cron.log 2>&1
+
+# 可选：强制立即执行（忽略时间窗口）
+# 0 9-11 * * * cd /opt/xhs_travel_bot && /usr/bin/python3 src/scheduler_v2.py --force >> /var/log/xhs_bot_cron.log 2>&1
+
+# 安装方法：
+# 1. 编辑crontab: crontab -e
+# 2. 复制上面的行
+# 3. 保存退出
+
+# 查看已安装的任务：
+# crontab -l
+
+# 删除任务：
+# crontab -e
+# 然后删除对应行
+
