@@ -95,11 +95,12 @@ async def check_and_login():
         logger.info("正在生成登录二维码...")
         
         try:
-            # 获取二维码（设置15秒超时，避免长时间卡住）
-            logger.info("⏱️  设置15秒超时...")
+            # 获取二维码（设置60秒超时，MCP 生成二维码可能需要时间）
+            logger.info("正在从小红书获取登录二维码...")
+            logger.info("⏱️  这可能需要 10-30 秒，请耐心等待...")
             qr_result = await asyncio.wait_for(
                 mcp.get_login_qrcode(),
-                timeout=15.0  # 15秒足够了，超过说明有问题
+                timeout=60.0  # 给足够的时间
             )
             
             # 处理超时或错误
@@ -171,8 +172,8 @@ async def check_and_login():
             return False
             
         except asyncio.TimeoutError:
-            logger.error("❌ 获取登录二维码超时（15秒）")
-            logger.warning("⚠️  MCP 服务的 get_login_qrcode 工具在 headless 环境下可能不稳定")
+            logger.error("❌ 获取登录二维码超时（60秒）")
+            logger.warning("⚠️  MCP 服务可能卡住了，建议重启")
             logger.info("")
             logger.info("📋 解决方案：使用浏览器登录")
             logger.info("=" * 70)
