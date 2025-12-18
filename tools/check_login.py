@@ -106,7 +106,7 @@ async def check_and_login():
                                         "elements": [
                                             {
                                                 "tag": "plain_text",
-                                                "content": f"⏰ 二维码有效期：4分钟\n📂 图片路径: {os.path.abspath(qr_path)}"
+                                                "content": "⏰ 二维码有效期：4分钟"
                                             }
                                         ]
                                     }
@@ -134,15 +134,15 @@ async def check_and_login():
                         content_lines = [
                             "🔐 小红书登录二维码",
                             "",
-                            f"📂 图片路径: {os.path.abspath(qr_path)}",
+                            "❌ 二维码图片上传失败",
+                            "⏰ 二维码有效期：4分钟",
                             "",
-                            "下载命令:",
-                            f"scp root@server:{os.path.abspath(qr_path)} .",
-                            "",
-                            "⏰ 二维码有效期：4分钟"
+                            "请检查飞书应用权限是否包含：",
+                            "  - im:resource:upload",
+                            "  - 或 im:resource"
                         ]
                         feishu.send_webhook_message("🔐 小红书登录二维码", content_lines)
-                        logger.info("✅ 二维码路径已发送到飞书")
+                        logger.info("✅ 提示信息已发送到飞书")
                     
                 except Exception as e:
                     logger.warning(f"⚠️  发送飞书通知失败: {e}")
