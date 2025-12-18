@@ -163,16 +163,121 @@ class FeishuClient:
         
         self.send_webhook_message("🎉 小红书发布成功", content_lines)
     
-    def send_failure_notification(self, ctx, error, title=None):
-        """发送失败通知"""
+    def send_failure_notification(self, ctx, error, title=None, step=None):
+        """
+        发送失败通知（增强版，包含详细错误定位）
+        
+        Args:
+            ctx: 上下文信息
+            error: 错误信息
+            title: 标题
+            step: 失败的步骤名称
+        """
         # 获取标题
         if not title:
             title = ctx.get('title', f"{ctx.get('city', 'N/A')}旅游攻略")
         
+        # 分析错误原因
+        error_str = str(error)
+        error_type = type(error).__name__
+        
+        # 错误分类和建议
+        error_category = "未知错误"
+        suggestions = []
+        
+        if "MCP" in error_str or "Session" in error_str:
+            error_category = "🔌 MCP服务问题"
+            suggestions = [
+                "检查MCP服务是否运行: sudo systemctl status xhs-mcp",
+                "检查是否已登录: 访问 http://localhost:18060",
+                "重启MCP服务: sudo systemctl restart xhs-mcp"
+            ]
+        elif "timeout" in error_str.lower() or "Timeout" in error_str:
+            error_category = "⏱️ 超时错误"
+            suggestions = [
+                "检查网络连接是否正常",
+                "检查小红书服务器是否可访问",
+                "增加超时时间配置"
+            ]
+        elif "Permission" in error_str or "Access denied" in error_str:
+            error_category = "🔐 权限错误"
+            suggestions = [
+                "检查飞书应用权限是否完整",
+                "检查文件/目录权限: ls -la",
+                "检查API密钥是否有效"
+            ]
+        elif "Network" in error_str or "Connection" in error_str:
+            error_category = "🌐 网络错误"
+            suggestions = [
+                "检查服务器网络连接",
+                "检查防火墙设置",
+                "测试外网连接: ping baidu.com"
+            ]
+        elif "Image" in error_str or "图片" in error_str:
+            error_category = "🖼️ 图片处理错误"
+            suggestions = [
+                "检查磁盘空间: df -h",
+                "检查temp_images目录权限",
+                "检查图片下载链接是否有效"
+            ]
+        elif "AI" in error_str or "API" in error_str or "DeepSeek" in error_str or "Qwen" in error_str:
+            error_category = "🤖 AI服务错误"
+            suggestions = [
+                "检查AI API密钥是否有效",
+                "检查API额度是否充足",
+                "检查AI服务是否可访问"
+            ]
+        elif "Font" in error_str or "字体" in error_str:
+            error_category = "🔤 字体错误"
+            suggestions = [
+                "安装中文字体: sudo apt install fonts-wqy-microhei",
+                "检查字体文件是否存在",
+                "验证字体安装: fc-list :lang=zh"
+            ]
+        else:
+            suggestions = [
+                "查看完整日志: tail -f logs/xhs_bot_*.log",
+                "检查配置文件: cat config/.env",
+                "手动测试: python src/scheduler_v2.py --force"
+            ]
+        
+        # 构建详细的通知内容
         content_lines = [
-            f"标题: {title}",
-            f"状态: ❌ 发布失败"
+            f"📝 标题: {title}",
+            f"🏙️ 城市: {ctx.get('city', 'N/A')}",
+            f"📍 主题: {ctx.get('topic_name', ctx.get('topic', 'N/A'))}",
+            "",
+            f"❌ 状态: 发布失败",
+            f"🔍 错误类型: {error_category}",
+            f"⚙️ 异常类型: {error_type}",
         ]
+        
+        # 添加失败步骤
+        if step:
+            content_lines.append(f"📍 失败步骤: {step}")
+        
+        content_lines.append("")
+        content_lines.append(f"💬 错误信息:")
+        
+        # 错误信息分行显示（限制长度）
+        error_lines = error_str.split('\n')
+        for line in error_lines[:3]:  # 只显示前3行
+            if line.strip():
+                content_lines.append(f"   {line[:100]}")
+        
+        if len(error_lines) > 3:
+            content_lines.append(f"   ... (共{len(error_lines)}行)")
+        
+        # 添加建议
+        if suggestions:
+            content_lines.append("")
+            content_lines.append("💡 排查建议:")
+            for i, suggestion in enumerate(suggestions[:3], 1):  # 最多3条建议
+                content_lines.append(f"   {i}. {suggestion}")
+        
+        # 添加时间戳
+        content_lines.append("")
+        content_lines.append(f"🕐 时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         self.send_webhook_message("❌ 小红书发布失败", content_lines)
     

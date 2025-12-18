@@ -85,30 +85,36 @@ def run_normal_mode(city=None):
         'error': None
     }
     downloader = None
+    current_step = "初始化"
     
     start_time = datetime.now()
     
     try:
         # Step 0: 生成上下文
-        logger.info("\n▶️  Step 0: 生成上下文")
+        current_step = "Step 0: 生成上下文"
+        logger.info(f"\n▶️  {current_step}")
         ctx = generate_context(city=city)
         logger.info(f"   城市: {ctx['city']}")
         
         # Step 1: 从小红书搜索内容
-        logger.info("\n▶️  Step 1: 从小红书搜索真实内容")
+        current_step = "Step 1: 搜索小红书内容"
+        logger.info(f"\n▶️  {current_step}")
         xhs_data = search_xhs_content(ctx)
         
         # Step 2: 下载并处理图片
-        logger.info("\n▶️  Step 2: 下载并处理图片")
+        current_step = "Step 2: 下载并处理图片"
+        logger.info(f"\n▶️  {current_step}")
         image_data = download_and_process_images(xhs_data)
         downloader = image_data['downloader']
         
         # Step 3: 生成攻略式文案
-        logger.info("\n▶️  Step 3: 生成攻略式文案")
+        current_step = "Step 3: AI生成攻略文案"
+        logger.info(f"\n▶️  {current_step}")
         content = generate_guide_content(ctx, xhs_data)
         
         # Step 4: 组装发布数据
-        logger.info("\n▶️  Step 4: 组装发布数据")
+        current_step = "Step 4: 组装发布数据"
+        logger.info(f"\n▶️  {current_step}")
         post = {
             'title': content['title'],
             'content': content['content'],
@@ -122,7 +128,8 @@ def run_normal_mode(city=None):
         logger.info(f"   标签: {len(post['tags'])}个")
         
         # Step 5: 发布到小红书
-        logger.info("\n▶️  Step 5: 发布到小红书")
+        current_step = "Step 5: MCP发布到小红书"
+        logger.info(f"\n▶️  {current_step}")
         publish_result = publish_to_xhs(post)
         
         # 记录成功
@@ -144,12 +151,13 @@ def run_normal_mode(city=None):
         logger.exception(f"❌ 执行失败: {e}")
         result['status'] = 'failed'
         result['error'] = str(e)
+        result['failed_step'] = current_step
         
         # 保存标题（如果已生成）
         if 'content' in locals() and content:
             result['title'] = content.get('title', f"{city}旅游攻略")
-        elif 'city' in locals() and city:
-            result['title'] = f"{city}旅游攻略"
+        elif 'ctx' in locals() and ctx:
+            result['title'] = f"{ctx.get('city', city)}旅游攻略"
         else:
             result['title'] = "旅游攻略（未完成）"
         
@@ -159,7 +167,12 @@ def run_normal_mode(city=None):
             from src.services.feishu_client import FeishuClient
             feishu = FeishuClient()
             simple_ctx = ctx if ctx else {'city': city if city else '未知', 'topic': '旅游攻略'}
-            feishu.send_failure_notification(simple_ctx, str(e), title=result.get('title'))
+            feishu.send_failure_notification(
+                simple_ctx, 
+                e,  # 传递异常对象
+                title=result.get('title'),
+                step=current_step
+            )
             logger.info("✅ 失败通知已发送")
         except Exception as notify_error:
             logger.error(f"❌ 发送失败通知时出错: {notify_error}")
@@ -239,16 +252,19 @@ def run_text_card_mode():
         'error': None
     }
     generator = None
+    current_step = "初始化"
     
     start_time = datetime.now()
     
     try:
         # 生成文字卡片内容
+        current_step = "生成文字卡片内容"
         card_data = generate_text_card_content()
         generator = card_data.get('generator')
         
         # 组装发布数据
-        logger.info("\n▶️  组装发布数据")
+        current_step = "组装发布数据"
+        logger.info(f"\n▶️  {current_step}")
         post = {
             'title': card_data['title'],
             'content': card_data['content'],
@@ -262,7 +278,8 @@ def run_text_card_mode():
         logger.info(f"   标签: {len(post['tags'])}个")
         
         # 发布到小红书
-        logger.info("\n▶️  发布到小红书")
+        current_step = "MCP发布到小红书"
+        logger.info(f"\n▶️  {current_step}")
         publish_result = publish_to_xhs(post)
         
         # 记录成功
@@ -284,6 +301,7 @@ def run_text_card_mode():
         logger.exception(f"❌ 执行失败: {e}")
         result['status'] = 'failed'
         result['error'] = str(e)
+        result['failed_step'] = current_step
         
         # 保存标题（如果已生成）
         if 'card_data' in locals() and card_data:
@@ -297,7 +315,12 @@ def run_text_card_mode():
             from src.services.feishu_client import FeishuClient
             feishu = FeishuClient()
             simple_ctx = {'city': '文字卡片', 'topic': '日常分享'}
-            feishu.send_failure_notification(simple_ctx, str(e), title=result.get('title'))
+            feishu.send_failure_notification(
+                simple_ctx, 
+                e,  # 传递异常对象
+                title=result.get('title'),
+                step=current_step
+            )
             logger.info("✅ 失败通知已发送")
         except Exception as notify_error:
             logger.error(f"❌ 发送失败通知时出错: {notify_error}")
