@@ -86,54 +86,87 @@ class XhsMcpClient:
         """
         await self._ensure_connected()
         
-        logger.info("获取小红书登录二维码...")
+        logger.info("🔍 [1/5] 获取小红书登录二维码...")
         try:
             import asyncio
+            
+            logger.info("🔍 [2/5] 查找 MCP 工具: get_login_qrcode")
             tool = self._get_tool("get_login_qrcode")
+            logger.info("✅ MCP 工具已找到")
             
             # 添加超时控制（60秒，MCP 生成二维码需要时间）
-            logger.info("⏱️  等待 MCP 服务生成二维码（可能需要 10-30 秒）...")
+            logger.info("🔍 [3/5] 调用 MCP 服务生成二维码...")
+            logger.info("⏱️  等待响应（可能需要 10-30 秒）...")
             result = await asyncio.wait_for(
                 tool.ainvoke({}),
                 timeout=60.0
             )
+            logger.info(f"✅ MCP 返回响应，类型: {type(result)}")
+            logger.debug(f"   完整响应（前500字符）: {str(result)[:500]}")
             
             # 处理返回结果，提取base64图片数据
+            logger.info("🔍 [4/5] 解析二维码数据...")
             qr_base64 = None
             if isinstance(result, list):
+                logger.info(f"   响应类型: 列表，长度={len(result)}")
                 # 遍历列表查找image类型的项
-                for item in result:
+                for i, item in enumerate(result):
+                    logger.debug(f"   项 {i}: {type(item)} - {str(item)[:100]}")
                     if isinstance(item, dict) and item.get('type') == 'image':
                         qr_base64 = item.get('base64')
+                        logger.info(f"✅ 在列表项 {i} 中找到 image 类型")
                         break
+                if not qr_base64:
+                    logger.warning("⚠️  列表中未找到 image 类型的项")
             elif isinstance(result, dict):
+                logger.info("   响应类型: 字典")
+                logger.debug(f"   字典键: {list(result.keys())}")
                 qr_base64 = result.get('qrcode') or result.get('qr_code') or result.get('image') or result.get('base64')
+                if qr_base64:
+                    logger.info("✅ 从字典中提取到 base64 数据")
+                else:
+                    logger.warning("⚠️  字典中未找到 qrcode/qr_code/image/base64 字段")
+            else:
+                logger.warning(f"⚠️  意外的响应类型: {type(result)}")
             
             # 保存二维码图片
+            logger.info("🔍 [5/5] 处理二维码数据...")
             if save_path and qr_base64:
                 import base64
                 import os
+                
+                logger.info(f"   准备保存到: {save_path}")
                 
                 # 确保目录存在
                 save_dir = os.path.dirname(save_path)
                 if save_dir:
                     os.makedirs(save_dir, exist_ok=True)
+                    logger.debug(f"   目录已创建: {save_dir}")
                 
                 # 如果是data URL格式，移除前缀
                 if isinstance(qr_base64, str) and qr_base64.startswith('data:image'):
+                    logger.debug("   检测到 data URL 格式，移除前缀")
                     qr_base64 = qr_base64.split(',')[1] if ',' in qr_base64 else qr_base64
                 
                 # 保存图片
                 if isinstance(qr_base64, str):
+                    logger.debug(f"   Base64 数据长度: {len(qr_base64)} 字符")
                     with open(save_path, 'wb') as f:
                         f.write(base64.b64decode(qr_base64))
-                    logger.info(f"✅ 二维码已保存到: {save_path}")
+                    file_size = os.path.getsize(save_path)
+                    logger.info(f"✅ 二维码已保存到: {save_path} ({file_size} 字节)")
+                else:
+                    logger.error(f"❌ qr_base64 不是字符串类型: {type(qr_base64)}")
                 
                 # 将保存路径添加到结果中
                 if isinstance(result, dict):
                     result['saved_path'] = save_path
+            elif save_path and not qr_base64:
+                logger.error("❌ 需要保存但未提取到 base64 数据")
+            elif qr_base64 and not save_path:
+                logger.info("✅ 二维码数据已获取（未保存到文件）")
             
-            logger.info(f"✅ 获取登录二维码成功")
+            logger.info(f"🎉 获取登录二维码成功")
             return result
             
         except asyncio.TimeoutError:

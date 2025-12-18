@@ -42,48 +42,6 @@ def check_login_before_run():
     logger.info("🔐 检查小红书登录状态...")
     logger.info("="*60)
     
-    def display_qrcode_in_terminal(image_path):
-        """在终端显示二维码图片"""
-        try:
-            from PIL import Image
-            import qrcode
-            
-            # 尝试从图片中读取二维码并重新生成ASCII版本
-            # 这样可以确保在终端显示清晰
-            logger.info("\n" + "="*60)
-            logger.info("📱 请使用小红书App扫描下方二维码登录")
-            logger.info("="*60)
-            
-            # 读取图片
-            img = Image.open(image_path)
-            
-            # 转换为黑白
-            img = img.convert('L')
-            
-            # 缩放到合适的终端显示大小
-            width, height = img.size
-            aspect_ratio = height / width
-            new_width = 60
-            new_height = int(aspect_ratio * new_width * 0.5)  # 0.5是因为字符高度约为宽度的2倍
-            img = img.resize((new_width, new_height))
-            
-            # 转换为ASCII
-            pixels = img.getdata()
-            ascii_chars = ['█', '▓', '▒', '░', ' ']
-            
-            ascii_art = []
-            for i in range(0, len(pixels), new_width):
-                row = pixels[i:i+new_width]
-                ascii_row = ''.join([ascii_chars[min(pixel // 51, 4)] for pixel in row])
-                ascii_art.append(ascii_row)
-            
-            print("\n" + "\n".join(ascii_art) + "\n")
-            logger.info("="*60)
-            
-        except Exception as e:
-            logger.warning(f"无法在终端显示二维码: {e}")
-            logger.info(f"请查看保存的图片文件: {image_path}")
-    
     async def _check():
         client = XhsMcpClient()
         try:
@@ -104,10 +62,7 @@ def check_login_before_run():
                 
                 # 检查图片是否保存成功
                 import os
-                if os.path.exists(qr_path):
-                    # 在终端显示二维码图片
-                    display_qrcode_in_terminal(qr_path)
-                else:
+                if not os.path.exists(qr_path):
                     logger.warning("二维码图片未生成，请检查MCP服务")
                 
                 logger.info(f"\n二维码图片已保存到: {qr_path}")
