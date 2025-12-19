@@ -40,64 +40,34 @@ def print_banner():
     print(banner)
 
 
-async def get_qrcode_direct_http() -> dict:
+async def get_qrcode_via_client() -> dict:
     """
-    直接通过 HTTP 调用 MCP 获取登录二维码
-    绕过 langchain_mcp_adapters，避免 SSE 流式响应问题
+    使用 XhsMcpClient 获取登录二维码（正确的方式）
     
     Returns:
-        dict: 包含 base64 数据的字典，或 error 字段
+        dict: 二维码路径或错误信息
     """
     try:
-        logger.info("🔗 使用直接 HTTP 调用获取二维码...")
+        logger.info("🔗 使用 XhsMcpClient 获取二维码...")
         
-        # 构建 JSON-RPC 请求
-        payload = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/call",
-            "params": {
-                "name": "get_login_qrcode",
-                "arguments": {}
-            }
-        }
+        client = XhsMcpClient()
+        # 指定保存路径
+        save_path = os.path.join(project_root, "login_qrcode.png")
+        qr_result = await client.get_login_qrcode(save_path=save_path)
         
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            # 发送请求，监听 SSE 流
-            async with client.stream(
-                "POST",
-                f"{MCP_URL}/mcp",
-                json=payload,
-                headers={"Accept": "text/event-stream"}
-            ) as response:
-                # 读取所有 SSE 事件
-                full_response = ""
-                async for line in response.aiter_lines():
-                    if line.startswith("data: "):
-                        data = line[6:]  # 移除 "data: " 前缀
-                        try:
-                            result = json.loads(data)
-                            if "result" in result and "content" in result["result"]:
-                                # 找到最终结果
-                                content = result["result"]["content"]
-                                for item in content:
-                                    if isinstance(item, dict) and item.get("type") == "image":
-                                        # MCP 返回的是 "data" 字段
-                                        base64_data = item.get("data") or item.get("base64")
-                                        if base64_data:
-                                            logger.info("✅ 直接 HTTP 调用成功获取二维码")
-                                            return {"base64": base64_data}
-                        except json.JSONDecodeError:
-                            continue
+        if isinstance(qr_result, dict) and 'error' in qr_result:
+            return qr_result
+        
+        # 检查文件是否成功保存
+        if os.path.exists(save_path):
+            logger.info(f"✅ 二维码已保存到: {save_path}")
+            return {"qr_path": save_path}
+        else:
+            logger.error("❌ 二维码文件未生成")
+            return {"error": "qrcode_file_not_found"}
                 
-                logger.warning("⚠️  SSE 响应中未找到二维码数据")
-                return {"error": "no_qrcode_in_response"}
-                
-    except httpx.TimeoutException:
-        logger.error("❌ 直接 HTTP 调用超时（60秒）")
-        return {"error": "timeout"}
     except Exception as e:
-        logger.error(f"❌ 直接 HTTP 调用失败: {e}")
+        logger.error(f"❌ 获取二维码失败: {e}")
         return {"error": str(e)}
 
 
@@ -179,22 +149,17 @@ async def check_and_login():
         logger.info("🔍 使用直接 HTTP 方式检查登录状态...")
         logger.info("=" * 60)
         
-        # 直接 HTTP 检查登录状态（更稳定）
-        status = await check_login_status_direct_http()
+        # 使用 XhsMcpClient 检查登录状态
+        mcp = XhsMcpClient()
+        if not await check_mcp_connection(mcp):
+            logger.error("❌ 无法连接到 MCP 服务")
+            return False
         
-        if status.get('error'):
-            logger.warning(f"⚠️  检查登录状态出错: {status.get('error')}")
-            logger.info("尝试使用 langchain_mcp_adapters 方式...")
-            # 降级到旧方式
-            mcp = XhsMcpClient()
-            if not await check_mcp_connection(mcp):
-                logger.error("❌ 无法连接到 MCP 服务")
-                return False
-            try:
-                status = await asyncio.wait_for(mcp.check_login_status(), timeout=15.0)
-            except asyncio.TimeoutError:
-                logger.error("❌ 检查登录状态超时")
-                return False
+        try:
+            status = await asyncio.wait_for(mcp.check_login_status(), timeout=15.0)
+        except asyncio.TimeoutError:
+            logger.error("❌ 检查登录状态超时")
+            return False
         
         if status.get('is_login'):
             logger.info("✅ 已登录小红书")
@@ -211,7 +176,7 @@ async def check_and_login():
         
         # 直接 HTTP 获取二维码（绕过 langchain_mcp_adapters 的 SSE 问题）
         logger.info("⏱️  这可能需要 10-30 秒，请耐心等待...")
-        qr_result = await get_qrcode_direct_http()
+        qr_result = await get_qrcode_via_client()
         
         # 处理错误
         if qr_result.get('error'):
@@ -236,27 +201,23 @@ async def check_and_login():
             )
             return False
         
-        # 提取 base64 数据
-        qr_base64 = qr_result.get('base64')
+        # 提取二维码路径
+        qr_path = qr_result.get('qr_path')
         
-        if not qr_base64:
-            logger.error("❌ 未能从结果中提取二维码数据")
+        if not qr_path or not os.path.exists(qr_path):
+            logger.error("❌ 未能找到二维码文件")
             return False
         
-        # 如果是 data URL 格式，移除前缀
-        if isinstance(qr_base64, str) and qr_base64.startswith('data:image'):
-            qr_base64 = qr_base64.split(',')[1] if ',' in qr_base64 else qr_base64
-        
-        logger.info("✅ 二维码生成成功")
+        logger.info(f"✅ 二维码已生成: {qr_path}")
         
         # 发送到飞书
         logger.info("正在发送二维码到飞书...")
         feishu = FeishuClient()
         
-        # 将 base64 转换为二进制数据并上传到飞书
-        import base64
+        # 读取二维码文件并上传到飞书
         try:
-            image_data = base64.b64decode(qr_base64)
+            with open(qr_path, 'rb') as f:
+                image_data = f.read()
             image_key = feishu.upload_image(image_data=image_data)
         except Exception as decode_error:
             logger.error(f"❌ base64解码失败: {decode_error}")

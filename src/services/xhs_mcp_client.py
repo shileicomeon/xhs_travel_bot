@@ -132,17 +132,17 @@ class XhsMcpClient:
             # 保存二维码图片
             logger.info("🔍 [5/5] 处理二维码数据...")
             if save_path and qr_base64:
-                    import base64
-                    import os
+                import base64
+                import os
                 
                 logger.info(f"   准备保存到: {save_path}")
-                    
-                    # 确保目录存在
+                
+                # 确保目录存在
                 save_dir = os.path.dirname(save_path)
                 if save_dir:
                     os.makedirs(save_dir, exist_ok=True)
                     logger.debug(f"   目录已创建: {save_dir}")
-                    
+                
                 # 如果是data URL格式，移除前缀
                 if isinstance(qr_base64, str) and qr_base64.startswith('data:image'):
                     logger.debug("   检测到 data URL 格式，移除前缀")
@@ -151,7 +151,7 @@ class XhsMcpClient:
                 # 保存图片
                 if isinstance(qr_base64, str):
                     logger.debug(f"   Base64 数据长度: {len(qr_base64)} 字符")
-                        with open(save_path, 'wb') as f:
+                    with open(save_path, 'wb') as f:
                         f.write(base64.b64decode(qr_base64))
                     file_size = os.path.getsize(save_path)
                     logger.info(f"✅ 二维码已保存到: {save_path} ({file_size} 字节)")
@@ -160,7 +160,7 @@ class XhsMcpClient:
                 
                 # 将保存路径添加到结果中
                 if isinstance(result, dict):
-                        result['saved_path'] = save_path
+                    result['saved_path'] = save_path
             elif save_path and not qr_base64:
                 logger.error("❌ 需要保存但未提取到 base64 数据")
             elif qr_base64 and not save_path:
