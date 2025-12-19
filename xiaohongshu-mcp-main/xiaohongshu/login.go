@@ -70,8 +70,11 @@ func (a *LoginAction) FetchQrcodeImage(ctx context.Context) (string, bool, error
 		return "", true, nil
 	}
 
-	// 获取二维码图片
-	src, err := pp.MustElement(".login-container .qrcode-img").Attribute("src")
+	// 获取二维码图片（使用更宽松的选择器，因为页面结构可能变化）
+	// 先尝试等待二维码元素出现
+	pp.Timeout(10 * time.Second).MustElement(".qrcode-img")
+
+	src, err := pp.MustElement(".qrcode-img").Attribute("src")
 	if err != nil {
 		return "", false, errors.Wrap(err, "get qrcode src failed")
 	}
