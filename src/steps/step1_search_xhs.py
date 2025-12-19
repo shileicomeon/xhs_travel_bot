@@ -54,11 +54,11 @@ def search_xhs_content(ctx):
         ]
     else:  # general
         # 通用类：保持原有的旅游攻略关键词
-    keywords = [
-        f"{city}旅游攻略",
-        f"{city}一日游",
-        f"{city}必去景点"
-    ]
+        keywords = [
+            f"{city}旅游攻略",
+            f"{city}一日游",
+            f"{city}必去景点"
+        ]
     
     all_feeds = []
     
