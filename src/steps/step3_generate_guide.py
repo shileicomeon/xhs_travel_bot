@@ -117,7 +117,7 @@ def _generate_fallback_guide(ctx, landmarks, topic_type='landmark'):
     elif topic_type == 'activity':
         title = f"{city}{landmarks_str}体验攻略"
     else:
-        title = f"{city}{landmarks_str}一日游攻略"
+    title = f"{city}{landmarks_str}一日游攻略"
     
     # 确保标题不超过20字
     if len(title) > 20:
@@ -128,7 +128,7 @@ def _generate_fallback_guide(ctx, landmarks, topic_type='landmark'):
         elif topic_type == 'activity':
             title = f"{city}玩乐攻略"
         else:
-            title = f"{city}旅游攻略"
+        title = f"{city}旅游攻略"
     
     # 根据话题类型生成不同风格的内容
     topic_type = ctx.get('topic_type', 'landmark')
