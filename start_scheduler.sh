@@ -52,24 +52,20 @@ echo -e "${YELLOW}🎯 启动调度器...${NC}"
 echo ""
 
 # 检查是否传入参数
-if [ "$1" == "--force" ]; then
-    echo -e "${YELLOW}⚡ 强制执行模式（忽略时间窗口）${NC}"
-    python3 src/scheduler_v2.py --force
-elif [ "$1" == "--test" ]; then
+if [ "$1" == "--test" ]; then
     echo -e "${YELLOW}🧪 测试模式（不实际发布）${NC}"
     python3 src/scheduler_v2.py --test
 elif [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
     echo "用法："
-    echo "  ./start_scheduler.sh           # 正常模式（检查时间窗口）"
-    echo "  ./start_scheduler.sh --force   # 强制执行（忽略时间窗口）"
+    echo "  ./start_scheduler.sh           # 正常模式（直接发布）"
     echo "  ./start_scheduler.sh --test    # 测试模式（不实际发布）"
     echo ""
-    echo "定时任务设置（每天 8:00-10:00 自动发布）："
-    echo "  crontab -e"
-    echo "  添加: 0 8 * * * $SCRIPT_DIR/start_scheduler.sh >> $SCRIPT_DIR/logs/cron.log 2>&1"
+    echo "定时任务设置（每天 8:00 触发，随机等待 0-120 分钟后发布）："
+    echo "  Cron 表达式: 0 0 8 * * ?"
+    echo "  命令内容: sleep \$((RANDOM % 7200)) && cd /root/sal/xhs_travel_bot && ./start_scheduler.sh >> logs/cron.log 2>&1"
     exit 0
 else
-    echo -e "${GREEN}⏰ 正常模式（检查时间窗口 8:00-10:00）${NC}"
+    echo -e "${GREEN}🚀 正常模式（直接发布）${NC}"
     python3 src/scheduler_v2.py
 fi
 

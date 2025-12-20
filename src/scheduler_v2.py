@@ -99,15 +99,12 @@ def main():
         logger.info("🧪 测试模式 V2")
         run_test_mode(args.city)
     else:
-        # 正常模式：检查是否应该运行
-        if args.force or should_run_now():
-            if args.force:
-                logger.info("🚀 强制执行模式")
-            else:
-                logger.info("✅ 到达发布时间，开始执行")
-            run_normal_mode(args.city)
+        # 正常模式：由外部定时任务控制随机时间，直接执行
+        if args.force:
+            logger.info("🚀 强制执行模式")
         else:
-            logger.info("⏰ 不在发布时间窗口内，退出")
+            logger.info("🚀 开始执行（时间由定时任务控制）")
+        run_normal_mode(args.city)
 
 
 def should_run_now():
