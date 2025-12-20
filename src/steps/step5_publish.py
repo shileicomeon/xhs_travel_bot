@@ -4,25 +4,11 @@ Step 5: 发布到小红书
 使用小红书MCP工具发布内容
 """
 
-import os
 import asyncio
 from datetime import datetime
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from ..utils.logger import logger
 from .step4_assembly import cleanup_local_images
-
-
-# 初始化小红书MCP客户端
-def _get_mcp_client():
-    """获取小红书MCP客户端"""
-    return MultiServerMCPClient(
-        {
-            "xiaohongshu-mcp": {
-                "transport": os.getenv("MCP_TRANSPORT", "sse"),
-                "url": os.getenv("XHS_MCP_URL", "http://localhost:18060/mcp"),
-            }
-        }
-    )
+from ..services.xhs_mcp_client import XhsMcpClient
 
 
 def publish_to_xhs(post):
@@ -80,18 +66,20 @@ async def _publish_via_mcp_async(post):
     """
     通过MCP异步发布到小红书
     """
-    client = _get_mcp_client()
+    client = XhsMcpClient()
     
     try:
-        # 获取MCP工具
+        # 确保连接并获取工具
         logger.info("正在连接小红书MCP服务...")
-        tools = await client.get_tools()
-        tool_map = {getattr(t, "name", ""): t for t in tools}
-        
-        logger.debug(f"可用MCP工具: {list(tool_map.keys())}")
+        await client._ensure_connected()
         
         # 查找发布工具
-        publish_tool = tool_map.get("publish_content")
+        publish_tool = None
+        for tool in client.tools:
+            if getattr(tool, "name", "") == "publish_content":
+                publish_tool = tool
+                break
+        
         if publish_tool is None:
             raise Exception("未找到 publish_content 工具，请确认MCP服务是否正常运行")
         
