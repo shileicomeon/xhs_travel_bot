@@ -61,24 +61,53 @@ echo "✅ 系统包列表更新完成"
 
 # 步骤3：安装Python和依赖
 echo -e "${GREEN}[3/10] 安装Python和系统依赖...${NC}"
-sudo apt install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    python3-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    libtiff-dev \
-    libfreetype6-dev \
-    fonts-wqy-microhei \
-    fonts-wqy-zenhei \
-    git \
-    curl \
-    wget \
-    screen \
-    xvfb \
-    libgbm1 \
-    libasound2
+
+# 根据Ubuntu版本选择不同的包
+UBUNTU_VERSION_NUM=$(lsb_release -rs | cut -d. -f1)
+
+if [ "$UBUNTU_VERSION_NUM" -ge 24 ]; then
+    # Ubuntu 24.04+ 使用新的包名
+    echo "检测到 Ubuntu 24.04+，使用新包名..."
+    sudo apt install -y \
+        python3 \
+        python3-pip \
+        python3-venv \
+        python3-dev \
+        libjpeg-dev \
+        zlib1g-dev \
+        libtiff-dev \
+        libfreetype-dev \
+        fonts-wqy-microhei \
+        fonts-wqy-zenhei \
+        git \
+        curl \
+        wget \
+        screen \
+        xvfb \
+        libgbm1 \
+        libasound2t64
+else
+    # Ubuntu 20.04/22.04 使用旧的包名
+    echo "检测到 Ubuntu 20.04/22.04，使用旧包名..."
+    sudo apt install -y \
+        python3 \
+        python3-pip \
+        python3-venv \
+        python3-dev \
+        libjpeg-dev \
+        zlib1g-dev \
+        libtiff-dev \
+        libfreetype6-dev \
+        fonts-wqy-microhei \
+        fonts-wqy-zenhei \
+        git \
+        curl \
+        wget \
+        screen \
+        xvfb \
+        libgbm1 \
+        libasound2
+fi
 
 echo "✅ 系统依赖安装完成"
 
