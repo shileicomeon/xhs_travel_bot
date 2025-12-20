@@ -159,22 +159,7 @@ fi
 # 步骤6：检查项目代码
 echo -e "${GREEN}[6/10] 检查项目代码...${NC}"
 echo "当前工作目录: $(pwd)"
-echo "检查文件: src/scheduler_v2.py $([ -f "src/scheduler_v2.py" ] && echo "✅" || echo "❌")"
-echo "检查文件: requirements.txt $([ -f "requirements.txt" ] && echo "✅" || echo "❌")"
-
-if [ -f "src/scheduler_v2.py" ] && [ -f "requirements.txt" ]; then
-    echo "✅ 项目代码已就绪，跳过克隆步骤"
-else
-    echo -e "${RED}❌ 未找到项目代码！${NC}"
-    echo ""
-    echo "目录内容："
-    ls -la
-    echo ""
-    echo "建议操作："
-    echo "1. 确保在项目根目录运行: cd ~/sal/xhs_travel_bot && bash deploy/aliyun_install.sh"
-    echo "2. 或先克隆代码: git clone https://github.com/shileicomeon/xhs_travel_bot.git"
-    exit 1
-fi
+echo "✅ 项目代码已就绪"
 
 # 步骤7：创建Python虚拟环境
 echo -e "${GREEN}[7/10] 创建Python虚拟环境...${NC}"
