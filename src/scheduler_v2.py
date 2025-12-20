@@ -112,7 +112,7 @@ def main():
 
 def should_run_now():
     """判断当前是否应该执行"""
-    return RandomHelper.should_run_now("09:00", "11:00")
+    return RandomHelper.should_run_now("08:00", "10:00")
 
 
 def run_normal_mode(city=None):
